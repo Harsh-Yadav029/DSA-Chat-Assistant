@@ -1,0 +1,276 @@
+<!-- public/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DSA Chat Assistant 💡</title>
+  <style>
+    :root{
+      --bg: #0f1724;
+      --card: #0b1220;
+      --muted: #94a3b8;
+      --accent: #6ee7b7;
+      --user: #1e293b;
+      --ai: linear-gradient(135deg,#0ea5e9,#7c3aed);
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    html,body{height:100%; margin:0; background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent), linear-gradient(180deg, #071025 0%, #071019 100%);}
+
+    .app {
+      max-width: 920px;
+      margin: 28px auto;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.7);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.03);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: calc(100vh - 56px);
+    }
+
+    header{
+      padding: 18px 22px;
+      display:flex; align-items:center; gap:16px; justify-content:space-between;
+      background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+    .title { display:flex; gap:10px; align-items:center; }
+    .logo {
+      width:44px; height:44px; background: linear-gradient(135deg,#06b6d4,#7c3aed); border-radius:10px;
+      display:grid; place-items:center; color:white; font-weight:700;
+      box-shadow: 0 6px 18px rgba(124,58,237,0.18);
+    }
+    h1{ margin:0; font-size:18px; color:#e6eef8; letter-spacing:0.2px }
+    p.sub{ margin:0; font-size:12px; color:var(--muted) }
+
+    main.chat {
+      padding: 18px;
+      display:flex; flex-direction:column; gap:12px; overflow:auto;
+    }
+    .messages { display:flex; flex-direction:column; gap:12px; padding-bottom:14px; }
+
+    .bubble {
+      max-width:78%;
+      padding:12px 14px;
+      border-radius:12px;
+      line-height:1.45;
+      box-shadow: 0 6px 20px rgba(2,6,23,0.6);
+      animation: fadeUp .14s ease both;
+      color: #e6eef8;
+      font-size:14px;
+    }
+    .bubble.user {
+      margin-left:auto;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+      color: #cfe9ff;
+    }
+    .bubble.ai {
+      background: linear-gradient(135deg,#0ea5e9 0%, #7c3aed 100%);
+      color: white;
+    }
+
+    .meta { font-size:11px; color:var(--muted); margin-bottom:8px; }
+
+    footer.input-area {
+      display:flex; gap:8px; align-items:center;
+      padding:12px; border-top: 1px solid rgba(255,255,255,0.02);
+      background: linear-gradient(180deg, rgba(0,0,0,0.01), transparent);
+    }
+    .input {
+      flex:1; display:flex; gap:8px;
+      background: rgba(255,255,255,0.01);
+      border-radius:12px; padding:8px;
+      align-items:center;
+    }
+    textarea {
+      width:100%;
+      resize:none; border:0; outline:0; background:transparent; color:#e6eef8;
+      font-size:14px; padding:8px; min-height:42px; max-height:120px;
+    }
+    button.send {
+      padding:10px 14px; background:linear-gradient(135deg,#06b6d4,#7c3aed);
+      border:0; border-radius:10px; color:white; cursor:pointer; font-weight:600;
+      box-shadow: 0 8px 20px rgba(124,58,237,0.18);
+    }
+    .small {
+      font-size:12px;
+      color:var(--muted);
+    }
+    .controls { display:flex; gap:8px; align-items:center; }
+
+    .typing {
+      display:inline-flex; gap:4px; align-items:center;
+    }
+    .dot { width:6px; height:6px; border-radius:50%; background:white; opacity:0.6; transform: translateY(0); animation: bounce 1s infinite; }
+    .dot:nth-child(2){ animation-delay: .12s }
+    .dot:nth-child(3){ animation-delay: .24s }
+
+    @keyframes bounce { 0%{ transform:translateY(0); opacity:.6 } 50%{ transform:translateY(-6px); opacity:1 } 100%{ transform:translateY(0); opacity:.6 } }
+    @keyframes fadeUp { from{ opacity:0; transform:translateY(6px)} to{ opacity:1; transform:translateY(0)} }
+
+    .top-actions { display:flex; gap:8px; align-items:center; }
+    .btn-ghost { background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); padding:8px 10px; border-radius:8px; cursor:pointer; }
+
+    /* responsive */
+    @media (max-width:700px) {
+      .app{ margin:12px; height: calc(100vh - 24px) }
+      h1{ font-size:16px }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <div class="logo">DS</div>
+        <div>
+          <h1>DSA Chat Assistant 💡</h1>
+          <p class="sub">Ask questions about Data Structures & Algorithms (uses Gemini + Pinecone)</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="indexBtn" class="btn-ghost" title="Index PDF">Index PDF</button>
+        <button id="themeToggle" class="btn-ghost">Toggle Theme</button>
+      </div>
+    </header>
+
+    <main class="chat">
+      <div class="messages" id="messages" aria-live="polite"></div>
+    </main>
+
+    <footer class="input-area">
+      <div class="input">
+        <textarea id="question" placeholder="Type your question..." rows="1"></textarea>
+      </div>
+      <div class="controls">
+        <button id="sendBtn" class="send">Send</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const sendBtn = document.getElementById('sendBtn');
+    const questionEl = document.getElementById('question');
+    const indexBtn = document.getElementById('indexBtn');
+    const themeToggle = document.getElementById('themeToggle');
+
+    function addMessage(text, who='ai') {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'bubble ' + (who === 'user' ? 'user' : 'ai');
+
+      if (who === 'ai') {
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = 'Assistant';
+        wrapper.appendChild(meta);
+      }
+
+      const content = document.createElement('div');
+      content.innerHTML = text.replace(/\\n/g, '<br/>');
+      wrapper.appendChild(content);
+
+      messagesEl.appendChild(wrapper);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function addTyping() {
+      const el = document.createElement('div');
+      el.className = 'bubble ai typing-indicator';
+      el.id = 'typingIndicator';
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = 'Assistant is typing...';
+      el.appendChild(meta);
+
+      const dots = document.createElement('div');
+      dots.className = 'typing';
+      dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+      el.appendChild(dots);
+
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function removeTyping() {
+      const t = document.getElementById('typingIndicator');
+      if (t) t.remove();
+    }
+
+    async function askQuestion(question) {
+      addMessage(question, 'user');
+      addTyping();
+
+      try {
+        const resp = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        removeTyping();
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(()=>({error:'Server error'}));
+          addMessage('Error: ' + (err.error || 'Unknown error'), 'ai');
+          return;
+        }
+        const data = await resp.json();
+        const answer = data.answer || 'I could not find the answer in the provided document.';
+        addMessage(answer, 'ai');
+      } catch (e) {
+        removeTyping();
+        addMessage('Network error: ' + e.message, 'ai');
+      }
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const q = questionEl.value.trim();
+      if (!q) return;
+      questionEl.value = '';
+      askQuestion(q);
+    });
+
+    questionEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+
+    indexBtn.addEventListener('click', async () => {
+      const ok = confirm('Index the PDF (dsa.pdf) now? This may take a while.');
+      if (!ok) return;
+      addMessage('Indexing started. This may take a few minutes...', 'ai');
+      try {
+        const resp = await fetch('/index', { method: 'POST' });
+        const data = await resp.json();
+        addMessage('Index result: ' + (data.message || JSON.stringify(data)), 'ai');
+      } catch (e) {
+        addMessage('Indexing failed: ' + e.message, 'ai');
+      }
+    });
+
+    themeToggle.addEventListener('click', () => {
+      // Simple theme toggle (invert background)
+      if (document.documentElement.style.getPropertyValue('--bg') === '') {
+        document.documentElement.style.setProperty('--bg', '#fff');
+        document.documentElement.style.setProperty('--card', '#f8fafc');
+      } else {
+        document.documentElement.style.removeProperty('--bg');
+        document.documentElement.style.removeProperty('--card');
+      }
+      alert('Theme toggle is a quick demo — styling may require page reload to fully change.');
+    });
+
+    // Welcome message
+    addMessage('Hello! I am your DSA Chat Assistant. Click "Index PDF" to load dsa.pdf into the vector DB (one-time). Then ask anything about Data Structures & Algorithms.', 'ai');
+  </script>
+</body>
+</html>
